@@ -2,6 +2,7 @@ library(tidyr)
 library(tidytext)
 library(stringr)
 library(dplyr)
+library(stringdist)
 
 # HELPER FUNCTIONS 
 calculateWCM<- function(klattese, index) {  # calculate WCM score for the word 
@@ -44,9 +45,9 @@ calculateWCM<- function(klattese, index) {  # calculate WCM score for the word
   return(phon_points) 
 }
 
-calculateRatio <- function(actual, target) {
-  return(actual/target)
-}
+# calculateRatio <- function(actual, target) {
+#   return(actual/target)
+# }
 
 removeMarkers <- function(klattese) {  # remove stress and syllable markers for readability
   klattese_plain = ""
@@ -133,7 +134,8 @@ for(file in 1:length(files)) {
     actual_wcm <- calculateWCM(actual, word)
     target_wcm <- calculateWCM(target, word)
     wf <- as.double(wf_tscript[word,1])
-    word_ratio <- calculateRatio(actual_wcm, target_wcm)
+    # word_ratio <- calculateRatio(actual_wcm, target_wcm)  # calculate ratio of WCM scores 
+    word_ratio <- stringdist(actual, target, method="lv")  # calculate Levenshtein distance
     
     # calculate & store info in word by word output 
     word_by_word[wbw_row, 1] = fileName
