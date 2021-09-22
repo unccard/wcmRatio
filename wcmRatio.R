@@ -7,12 +7,8 @@ library(stringdist)
 # HELPER FUNCTIONS 
 calculateWCM<- function(klattese, index) {  # calculate WCM score for the word 
   phon_points <- 0 
-  
-  # WCM rules for word patterns 
-  polysyll <- polysyll_tscript[index,1]  # if the word is polysyllabic 
-  nonInitPrimStress <- nonInitPrimStress_tscript[index,1]  # if the word has non-initial stress
-  if (polysyll == 1) phon_points=phon_points+1  # word patterns (1)
-  if (nonInitPrimStress == 1) phon_points=phon_points+1  # word patterns (2)
+  syllables <- 1
+  nonInitPrimStress <- 0
   
   # if the word ends in a consonant 
   len <- str_length(klattese)
@@ -29,9 +25,11 @@ calculateWCM<- function(klattese, index) {  # calculate WCM score for the word
     }
   }
   
-  # for loop to assign points for sound classes 
+  # for loop to assign points for sound classes, and find stress and syllables 
   for (i in 1:str_length(klattese)) {
     phoneme <- substr(klattese, i, i)
+    if(phoneme == '-') syllables=syllables+1
+    if(phoneme == 'ˈ' && syllables >= 2) nonInitPrimStress = 1
     # WCM rules for sound classes 
     if (phoneme %in% engl_velars) phon_points=phon_points+1  # sound classes (1)
     if (phoneme %in% engl_liquids) phon_points=phon_points+1  # sound classes (2)
@@ -42,6 +40,9 @@ calculateWCM<- function(klattese, index) {  # calculate WCM score for the word
       }
     }
   }
+  if (syllables > 2) phon_points=phon_points+1  # word patterns (1)
+  if (nonInitPrimStress == 1) phon_points=phon_points+1  # word patterns (2)
+  
   return(phon_points) 
 }
 
