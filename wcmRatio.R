@@ -80,7 +80,7 @@ tibbletest <-tibble(word_db$phon_klattese, word_db$SUBTLWF0to10)
 
 # set up data frame to store average results  
 data <- data.frame(matrix(vector(), ncol=5, nrow=length(files)))  # data frame to store avg output  
-files <- list.files(path=data_path, pattern="*practice.csv")
+files <- list.files(path=data_path, pattern="*-input.csv")
 header_names <- list("Avg_Production_WCM","Avg_Target_WCM", "Avg_WCM_Ratio",
                      "Avg_Edit_Ratio","Avg_WF_Score")  # column headers for avg output df 
 colnames(data) <- header_names
