@@ -99,7 +99,7 @@ for(file in 1:length(files)) {
   filePath <- paste(data_path, "/", fileName, sep="")  # update file name to absolute path 
   transcript <- read.csv(filePath, na.strings=c("", "NA"))  # read in csv and handle NA values 
   
-  # initialize vectors that will be populated with data for each word in sample 
+  # initialize vectors to populate with data for each word in sample 
   foundInDB_tscript <- c()  # each target Klattese word that is found in the db
   wf_tscript <- c()  # frequency of each word 
   
