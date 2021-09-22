@@ -46,9 +46,9 @@ calculateWCM<- function(klattese, index) {  # calculate WCM score for the word
   return(phon_points) 
 }
 
-# calculateRatio <- function(actual, target) {
-#   return(actual/target)
-# }
+calculateRatio <- function(prod, target) {
+  return(prod/target)
+}
 
 removeMarkers <- function(klattese) {  # remove stress and syllable markers for readability
   klattese_plain = ""
@@ -76,21 +76,20 @@ word_db <- read.csv('/Users/lindsaygreene/Desktop/programming/wcmRatio/UNCCombWo
 data_path <- file.path("", "Users", "lindsaygreene", "Desktop", "programming", "wcmRatio")
 
 # isolate the categories we need from word_db
-tibbletest <-tibble(word_db$phon_klattese, word_db$polysyll, word_db$nonInitialPrimaryStress, 
-                    word_db$SUBTLWF0to10)   
+tibbletest <-tibble(word_db$phon_klattese, word_db$SUBTLWF0to10)   
 
 # set up data frame to store average results  
-data <- data.frame(matrix(vector(), ncol=4, nrow=length(files)))  # data frame to store avg output  
+data <- data.frame(matrix(vector(), ncol=5, nrow=length(files)))  # data frame to store avg output  
 files <- list.files(path=data_path, pattern="*practice.csv")
-header_names <- list("Avg_Actual_Score","Avg_Target_Score", 
+header_names <- list("Avg_Production_WCM","Avg_Target_WCM", "Avg_WCM_Ratio",
                      "Avg_Edit_Ratio","Avg_WF_Score")  # column headers for avg output df 
 colnames(data) <- header_names
 rownames(data) <- files
 
 # set up data frame to store word by word results 
-word_by_word <- data.frame(matrix(vector(), ncol=7))  # data frame to store info ab individual words from each transcript
-names <- list("File_Name", "Actual_Production", "Target_Word", "Edit_Ratio", "Actual_WCM", 
-              "Target_WCM", "Word_Frequency")  # column headers for word by word df 
+word_by_word <- data.frame(matrix(vector(), ncol=8))  # data frame to store info ab individual words from each transcript
+names <- list("File_Name", "Production", "Target", "Production_WCM","Target_WCM",
+              "WCM_Ratio", "Edit_Ratio", "Word_Frequency")  # column headers for word by word df 
 colnames(word_by_word) <- names
 wbw_row = 1  # count number of rows in word by word db 
 
@@ -102,12 +101,10 @@ for(file in 1:length(files)) {
   
   # initialize vectors that will be populated with data for each word in sample 
   foundInDB_tscript <- c()  # each target Klattese word that is found in the db
-  polysyll_tscript <- c()  # whether each word is polysyllabic
-  nonInitPrimStress_tscript <- c()  # whether each word has non-initial primary stress 
   wf_tscript <- c()  # frequency of each word 
   
   # initialize cumulative points for each file 
-  target_phon_total <- actual_phon_total <- wf_total <- 0 
+  target_phon_total <- prod_phon_total <- edit_distance_total <- wf_total <- 0 
   
   # populate vectors with data for each word in the transcript
   for(i in 1:nrow(transcript)) {
@@ -115,60 +112,60 @@ for(file in 1:length(files)) {
     row <- which(tibbletest[,1] == word)
     if(!identical(toString(tibbletest[row, 1]),"character(0)")) {  # omit words not found in word_db
       foundInDB_tscript <- append(foundInDB_tscript, toString(tibbletest[row, 1]))
-      polysyll_tscript <- append(polysyll_tscript, toString(tibbletest[row, 2]))
-      nonInitPrimStress_tscript <- append(nonInitPrimStress_tscript, toString(tibbletest[row, 3]))
-      wf_tscript <- append(wf_tscript, toString(tibbletest[row, 4]))
+      wf_tscript <- append(wf_tscript, toString(tibbletest[row, 2]))
     }
   }
   
   # transform vectors into data frames 
   foundInDB_tscript<-as.data.frame(foundInDB_tscript)
-  polysyll_tscript<-as.data.frame(polysyll_tscript)
-  nonInitPrimStress_tscript<-as.data.frame(nonInitPrimStress_tscript)
   wf_tscript<-as.data.frame(wf_tscript)
   
   for(word in 1:nrow(foundInDB_tscript)) {
     target <- foundInDB_tscript[word,1]
-    actual <- transcript[which(transcript[,1] == target), 2]
-    actual_plain <- removeMarkers(actual)
+    prod <- transcript[which(transcript[,1] == target), 2]
+    prod_plain <- removeMarkers(prod)
     target_plain <- removeMarkers(target)
-    actual_wcm <- calculateWCM(actual, word)
+    prod_wcm <- calculateWCM(prod, word)
     target_wcm <- calculateWCM(target, word)
+    wcm_ratio <- calculateRatio(prod_wcm, target_wcm)  # calculate ratio of WCM scores 
+    edit_ratio <- stringdist(prod, target, method="lv")  # calculate Levenshtein distance
     wf <- as.double(wf_tscript[word,1])
-    # word_ratio <- calculateRatio(actual_wcm, target_wcm)  # calculate ratio of WCM scores 
-    word_ratio <- stringdist(actual, target, method="lv")  # calculate Levenshtein distance
     
     # calculate & store info in word by word output 
     word_by_word[wbw_row, 1] = fileName
-    word_by_word[wbw_row, 2] = actual_plain
+    word_by_word[wbw_row, 2] = prod_plain
     word_by_word[wbw_row, 3] = target_plain
-    word_by_word[wbw_row, 4] = word_ratio
-    word_by_word[wbw_row, 5] = actual_wcm
-    word_by_word[wbw_row, 6] = target_wcm
-    word_by_word[wbw_row, 7] = wf
+    word_by_word[wbw_row, 4] = prod_wcm
+    word_by_word[wbw_row, 5] = target_wcm
+    word_by_word[wbw_row, 6] = wcm_ratio
+    word_by_word[wbw_row, 7] = edit_ratio
+    word_by_word[wbw_row, 8] = wf
     
     wbw_row = wbw_row + 1  # move to next row in the word by word df 
     
     # add points for current word to cumulative total 
+    prod_phon_total = prod_phon_total + prod_wcm
     target_phon_total = target_phon_total + target_wcm
-    actual_phon_total = actual_phon_total + actual_wcm
+    edit_distance_total = edit_distance_total + edit_ratio
     wf_total = wf_total + wf
-    
   }
+  
   # calculate averages for file from total points 
+  avg_prod_wcm <- prod_phon_total/nrow(foundInDB_tscript)
   avg_target_wcm <- target_phon_total/nrow(foundInDB_tscript)
-  avg_actual_wcm <- actual_phon_total/nrow(foundInDB_tscript)
-  avg_ratio <- actual_phon_total/target_phon_total
+  avg_wcm_ratio <- calculateRatio(prod_phon_total, target_phon_total)
+  avg_edit_ratio <- edit_distance_total/nrow(foundInDB_tscript)
   avg_wf <- wf_total/nrow(wf_tscript)
   
   # write output and file name to avg output data frame  
-  data[file,1] = avg_target_wcm
-  data[file,2] = avg_actual_wcm
-  data[file,3] = avg_ratio
-  data[file,4] = avg_wf
+  data[file, 1] = avg_prod_wcm
+  data[file, 2] = avg_target_wcm
+  data[file, 3] = avg_wcm_ratio
+  data[file, 4] = avg_edit_ratio
+  data[file, 5] = avg_wf
 }
 
-# write output to file and save to same location to be opened in excel 
+# write output to file and save to same location as input files
 write.csv(data, file=paste(data_path, "/", "wcmRatio_output.csv", sep=""))
 write.csv(word_by_word, file=paste(data_path, "/", "wcmRatio_word_by_word.csv", sep=""))
 
