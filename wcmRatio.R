@@ -82,14 +82,14 @@ tibbletest <-tibble(word_db$phon_klattese, word_db$polysyll, word_db$nonInitialP
 data <- data.frame(matrix(vector(), ncol=4, nrow=length(files)))  # data frame to store avg output  
 files <- list.files(path=data_path, pattern="*practice.csv")
 header_names <- list("Avg_Actual_Score","Avg_Target_Score", 
-                     "Actual_to_Target_Ratio","Avg_WF_Score")  # column headers for avg output df 
+                     "Avg_Edit_Ratio","Avg_WF_Score")  # column headers for avg output df 
 colnames(data) <- header_names
 rownames(data) <- files
 
 # set up data frame to store word by word results 
 word_by_word <- data.frame(matrix(vector(), ncol=7))  # data frame to store info ab individual words from each transcript
-names <- list("File_Name", "Actual_Production", "Target_Word", "Actual_WCM", 
-              "Target_WCM", "Ratio","Word_Frequency")  # column headers for word by word df 
+names <- list("File_Name", "Actual_Production", "Target_Word", "Edit_Ratio", "Actual_WCM", 
+              "Target_WCM", "Word_Frequency")  # column headers for word by word df 
 colnames(word_by_word) <- names
 wbw_row = 1  # count number of rows in word by word db 
 
@@ -141,9 +141,9 @@ for(file in 1:length(files)) {
     word_by_word[wbw_row, 1] = fileName
     word_by_word[wbw_row, 2] = actual_plain
     word_by_word[wbw_row, 3] = target_plain
-    word_by_word[wbw_row, 4] = actual_wcm
-    word_by_word[wbw_row, 5] = target_wcm
-    word_by_word[wbw_row, 6] = word_ratio
+    word_by_word[wbw_row, 4] = word_ratio
+    word_by_word[wbw_row, 5] = actual_wcm
+    word_by_word[wbw_row, 6] = target_wcm
     word_by_word[wbw_row, 7] = wf
     
     wbw_row = wbw_row + 1  # move to next row in the word by word df 
