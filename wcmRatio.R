@@ -82,14 +82,14 @@ tibbletest <-tibble(word_db$phon_klattese, word_db$SUBTLWF0to10)
 data <- data.frame(matrix(vector(), ncol=5, nrow=length(files)))  # data frame to store avg output  
 files <- list.files(path=data_path, pattern="*-input.csv")
 header_names <- list("Avg_Target_WCM","Avg_Production_WCM", "Avg_WCM_Ratio",
-                     "Avg_Edit_Ratio","Avg_WF_Score")  # column headers for avg output df 
+                     "Avg_Edit_Proportion","Avg_WF_Score")  # column headers for avg output df 
 colnames(data) <- header_names
 rownames(data) <- files
 
 # set up data frame to store word by word results 
 word_by_word <- data.frame(matrix(vector(), ncol=8))  # data frame to store info ab individual words from each transcript
 names <- list("File_Name", "Target", "Production", "Target_WCM","Prod_WCM",
-              "WCM_Ratio", "Edit_Ratio", "Word_Frequency")  # column headers for word by word df 
+              "WCM_Ratio", "Edit_Proportion", "Word_Frequency")  # column headers for word by word df 
 colnames(word_by_word) <- names
 wbw_row = 1  # count number of rows in word by word db 
 
@@ -128,7 +128,7 @@ for(file in 1:length(files)) {
     target_wcm <- calculateWCM(target, word)
     prod_wcm <- calculateWCM(prod, word)
     wcm_ratio <- calculateRatio(prod_wcm, target_wcm)  # calculate ratio of WCM scores 
-    edit_ratio <- stringdist(prod, target, method="lv")  # calculate Levenshtein distance
+    edit_proportion <- stringdist(prod, target, method="lv")  # calculate Levenshtein distance
     wf <- as.double(wf_tscript[word,1])
     
     # calculate & store info in word by word output 
@@ -138,7 +138,7 @@ for(file in 1:length(files)) {
     word_by_word[wbw_row, 4] = target_wcm
     word_by_word[wbw_row, 5] = prod_wcm
     word_by_word[wbw_row, 6] = wcm_ratio
-    word_by_word[wbw_row, 7] = edit_ratio
+    word_by_word[wbw_row, 7] = edit_proportion
     word_by_word[wbw_row, 8] = wf
     
     wbw_row = wbw_row + 1  # move to next row in the word by word df 
@@ -146,7 +146,7 @@ for(file in 1:length(files)) {
     # add points for current word to cumulative total 
     target_phon_total = target_phon_total + target_wcm
     prod_phon_total = prod_phon_total + prod_wcm
-    edit_distance_total = edit_distance_total + edit_ratio
+    edit_distance_total = edit_distance_total + edit_proportion
     wf_total = wf_total + wf
   }
   
@@ -154,14 +154,14 @@ for(file in 1:length(files)) {
   avg_target_wcm <- target_phon_total/nrow(foundInDB_tscript)
   avg_prod_wcm <- prod_phon_total/nrow(foundInDB_tscript)
   avg_wcm_ratio <- calculateRatio(prod_phon_total, target_phon_total)
-  avg_edit_ratio <- edit_distance_total/nrow(foundInDB_tscript)
+  avg_edit_proportion <- edit_distance_total/nrow(foundInDB_tscript)
   avg_wf <- wf_total/nrow(wf_tscript)
   
   # write output and file name to avg output data frame  
   data[file, 1] = avg_target_wcm
   data[file, 2] = avg_prod_wcm
   data[file, 3] = avg_wcm_ratio
-  data[file, 4] = avg_edit_ratio
+  data[file, 4] = avg_edit_proportion
   data[file, 5] = avg_wf
 }
 
