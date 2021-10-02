@@ -5,7 +5,7 @@ library(dplyr)
 library(stringdist)
 
 # HELPER FUNCTIONS 
-calculateWCM<- function(klattese, index) {  # calculate WCM score for the word 
+calculateWCM<- function(klattese, index, hasWordStressCoded) {  # calculate WCM score for the word 
   phon_points <- 0 
   syllables <- 1
   nonInitPrimStress <- 0
@@ -29,7 +29,7 @@ calculateWCM<- function(klattese, index) {  # calculate WCM score for the word
   for (i in 1:str_length(klattese)) {
     phoneme <- substr(klattese, i, i)
     if(phoneme == '-') syllables=syllables+1
-    if(phoneme == 'ˈ' && syllables >= 2) nonInitPrimStress = 1
+    if(hasWordStressCoded == 1 && phoneme == 'ˈ' && syllables >= 2) nonInitPrimStress = 1
     # WCM rules for sound classes 
     if (phoneme %in% engl_velars) phon_points=phon_points+1  # sound classes (1)
     if (phoneme %in% engl_liquids) phon_points=phon_points+1  # sound classes (2)
@@ -74,6 +74,7 @@ engl_liquids <- c("l","L","r","R","X")
 
 word_db <- read.csv('/Users/lindsaygreene/Desktop/programming/wcmRatio/UNCCombWordDB.csv', na.strings=c("", "NA"))
 data_path <- file.path("", "Users", "lindsaygreene", "Desktop", "programming", "wcmRatio")
+hasWordStressCoded <- 1  # 1 if word stress is coded in transcript, 0 if not 
 
 # isolate the categories we need from word_db
 tibbletest <-tibble(word_db$phon_klattese, word_db$SUBTLWF0to10)   
@@ -104,7 +105,7 @@ for(file in 1:length(files)) {
   wf_tscript <- c()  # frequency of each word 
   
   # initialize cumulative points for each file 
-  target_phon_total <- prod_phon_total <- edit_distance_total <- wf_total <- 0 
+  target_phon_total <- prod_phon_total <- edit_distance_total <- target_segments_total <- wf_total <- 0 
   
   # populate vectors with data for each word in the transcript
   for(i in 1:nrow(transcript)) {
@@ -125,10 +126,12 @@ for(file in 1:length(files)) {
     prod <- transcript[which(transcript[,1] == target), 2]
     target_plain <- removeMarkers(target)
     prod_plain <- removeMarkers(prod)
-    target_wcm <- calculateWCM(target, word)
-    prod_wcm <- calculateWCM(prod, word)
+    target_wcm <- calculateWCM(target, word, hasWordStressCoded)
+    prod_wcm <- calculateWCM(prod, word, hasWordStressCoded)
     wcm_ratio <- calculateRatio(prod_wcm, target_wcm)  # calculate ratio of WCM scores 
-    edit_proportion <- stringdist(prod, target, method="lv")  # calculate Levenshtein distance
+    lev_dist <- stringdist(prod, target, method="lv")  # calculate Levenshtein distance
+    target_segments <- str_length(target_plain)
+    edit_proportion <- lev_dist/target_segments
     wf <- as.double(wf_tscript[word,1])
     
     # calculate & store info in word by word output 
@@ -146,7 +149,8 @@ for(file in 1:length(files)) {
     # add points for current word to cumulative total 
     target_phon_total = target_phon_total + target_wcm
     prod_phon_total = prod_phon_total + prod_wcm
-    edit_distance_total = edit_distance_total + edit_proportion
+    edit_distance_total = edit_distance_total + lev_dist
+    target_segments_total = target_segments_total + target_segments
     wf_total = wf_total + wf
   }
   
@@ -154,7 +158,7 @@ for(file in 1:length(files)) {
   avg_target_wcm <- target_phon_total/nrow(foundInDB_tscript)
   avg_prod_wcm <- prod_phon_total/nrow(foundInDB_tscript)
   avg_wcm_ratio <- calculateRatio(prod_phon_total, target_phon_total)
-  avg_edit_proportion <- edit_distance_total/nrow(foundInDB_tscript)
+  avg_edit_proportion <- edit_distance_total/target_segments_total
   avg_wf <- wf_total/nrow(wf_tscript)
   
   # write output and file name to avg output data frame  
