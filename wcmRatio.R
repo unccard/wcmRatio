@@ -35,32 +35,12 @@ word_by_word <- data.frame(matrix(vector(), ncol=9))  # data frame to store info
 names <- list("File_Name", "Target", "Production", "Target_WCM","Prod_WCM", "WCM_Ratio", 
               "Phonemic_Error_Rate", "Phonemic_Accuracy_Rate","Word_Frequency")  # column headers for word by word df 
 colnames(word_by_word) <- names
+wbw_row <- 1  # track row in wbw output - necessary for when we have more than one file 
 
 for(file in files) {
   filePath <- paste(data_path, "/", file, sep="")  # update file name to absolute path 
   transcript <- read.csv(filePath, na.strings=c("", "NA"))  # read in csv and handle NA values 
-  
-  # # initialize vectors that will be populated with data for each word in sample 
-  # phonetic_tscript <- phonetic_plain_tscript <- wf_tscript <- c()
-  # 
-  # # populate vectors with data for each word in the transcript 
-  # for(i in 1:nrow(transcript)) {
-  #   word <- toString(transcript[i,1])
-  #   row <- 0
-  #   if(!isMarked) row = which(tibbletest[,1] == word)
-  #   else row = which(tibbletest[,2] == word)
-  #   if(!identical(toString(tibbletest[row, 2]),"character(0)")){  # omit words not found in word_db
-  #     phonetic_tscript <- append(phonetic_tscript, toString(tibbletest[row, 1]))
-  #     phonetic_plain_tscript <- append(phonetic_plain_tscript, toString(tibbletest[row,2]))
-  #     wf_tscript <- append(wf_tscript, toString(tibbletest[row,3]))
-  #   }
-  # }
-  # 
-  # # transform the vectors into data frames 
-  # phonetic_tscript<-as.data.frame(phonetic_tscript)
-  # phonetic_plain_tscript<-as.data.frame(phonetic_plain_tscript)
-  # wf_tscript<-as.data.frame(wf_tscript)
-  
+
   # initialize cumulative points for each file 
   target_phon_total <- prod_phon_total <- edit_distance_total <- target_segments_total <- wf_total <- 0 
   
@@ -68,49 +48,59 @@ for(file in files) {
     target <- prod <- target_plain <- prod_plain <- ""
     target_wcm <- prod_wcm <- wf <- row <- 0
     
-    if(!isMarked) {
-      row = which(tibbletest[,2] == word)
-      # IF FOUND 
+    if(isMarked == 0) {
+      row = which(tibbletest[,2] == toString(transcript[word, 1]))
+      if(length(row) == 0) {
+        word_by_word[wbw_row, 1] = file
+        word_by_word[wbw_row, 2] = toString(transcript[word, 1])
+        word_by_word[wbw_row, 3] = toString(transcript[word, 2])
+        wbw_row = wbw_row + 1
+        next
+      }
       target = toString(tibbletest[row,2])
       prod = transcript[which(transcript[,1] == target), 2]
       target_plain = toString(tibbletest[row,2])
       prod_plain = prod
       target_wcm = unmarkedCalculateWCM(target)
       prod_wcm = unmarkedCalculateWCM(prod)
-      wf = toDouble(tibbletest[row,3])
-      # ELSE FILL ROW WITH NA 
+      wf = as.double(tibbletest[row,3])
     } else {
-      row = which(tibbletest[,1] == word)
-      # IF FOUND 
+      row = which(tibbletest[,1] == toString(transcript[word, 1]))
+      if(length(row) == 0) {
+        word_by_word[wbw_row, 1] = file
+        word_by_word[wbw_row, 2] = removeMarkers(toString(transcript[word, 1]))
+        word_by_word[wbw_row, 3] = removeMarkers(toString(transcript[word, 2]))
+        wbw_row = wbw_row + 1
+        next
+      }
       target = toString(tibbletest[row,1])
       prod = transcript[which(transcript[,1] == target), 2]
       target_plain = toString(tibbletest[row,2])
       prod_plain = removeMarkers(prod)
       target_wcm = markedCalculateWCM(target)
       prod_wcm = markedCalculateWCM(prod)
-      wf = toDouble(tibbletest[row,3])
-      # ELSE FILL ROW WITH NA 
+      wf = as.double(tibbletest[row,3])
     }
     
-    # CONDITIONAL FOR IF NA 
     wcm_ratio <- prod_wcm/target_wcm  # calculate ratio of WCM scores 
     lev_dist <- stringdist(prod, target, method="lv")  # calculate Levenshtein distance
     target_segments <- str_length(target_plain)
     phonemic_error_rate <- lev_dist/target_segments
     phonemic_accuracy_rate <- 1 - phonemic_error_rate
-    
+      
     # calculate & store info in word by word output 
-    word_by_word[word, 1] = fileName
-    word_by_word[word, 2] = target_plain
-    word_by_word[word, 3] = prod_plain
-    word_by_word[word, 4] = target_wcm
-    word_by_word[word, 5] = prod_wcm
-    word_by_word[word, 6] = wcm_ratio
-    word_by_word[word, 7] = phonemic_error_rate
-    word_by_word[word, 8] = phonemic_accuracy_rate
-    word_by_word[word, 9] = wf
+    word_by_word[wbw_row, 1] = file
+    word_by_word[wbw_row, 2] = target_plain
+    word_by_word[wbw_row, 3] = prod_plain
+    word_by_word[wbw_row, 4] = target_wcm
+    word_by_word[wbw_row, 5] = prod_wcm
+    word_by_word[wbw_row, 6] = wcm_ratio
+    word_by_word[wbw_row, 7] = phonemic_error_rate
+    word_by_word[wbw_row, 8] = phonemic_accuracy_rate
+    word_by_word[wbw_row, 9] = wf
     
-    # CONDITIONAL FOR IF NA 
+    wbw_row = wbw_row + 1  # increment row in wbw output 
+      
     # add points for current word to cumulative total 
     target_phon_total = target_phon_total + target_wcm
     prod_phon_total = prod_phon_total + prod_wcm
@@ -119,12 +109,13 @@ for(file in files) {
     wf_total = wf_total + wf
   }
   
-  # CONDITIONAL FOR IF NA 
   # calculate averages for file from total points 
+  avg_wcm_ratio <- avg_phonemic_error_rate <- avg_phonemic_accuracy_rate <- 0
   avg_target_wcm <- target_phon_total/nrow(transcript)
   avg_prod_wcm <- prod_phon_total/nrow(transcript)
-  avg_phonemic_error_rate <- edit_distance_total/target_segments_total
-  avg_phonemic_accuracy_rate <- 1 - avg_phonemic_error_rate
+  if(avg_target_wcm != 0) avg_wcm_ratio = avg_prod_wcm/avg_target_wcm
+  if(target_segments_total > 0) avg_phonemic_error_rate = edit_distance_total/target_segments_total
+  if(avg_phonemic_error_rate > 0) avg_phonemic_accuracy_rate = 1 - avg_phonemic_error_rate
   avg_wf <- wf_total/nrow(transcript)
   
   # write output and file name to avg output data frame  

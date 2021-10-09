@@ -1,1 +1,13 @@
 "","File_Name","Target","Production","Target_WCM","Prod_WCM","WCM_Ratio","Phonemic_Error_Rate","Phonemic_Accuracy_Rate","Word_Frequency"
+"1","2practice-input.csv","r^flEkS^n","r^fEkS^n",9,7,0.777777777777778,0.111111111111111,0.888888888888889,3.701767265
+"2","2practice-input.csv","hR^ken","hR^ken",6,6,1,0,1,3.943112156
+"3","2practice-input.csv","vEJt^b^l","vEJt^b^",7,5,0.714285714285714,0.125,0.875,3.757216994
+"4","2practice-input.csv","manyum^nt","man^m^nt",4,3,0.75,0.222222222222222,0.777777777777778,3.363716149
+"5","2practice-input.csv","vEJt^b^","vEJt^b^",NA,NA,NA,NA,NA,NA
+"6","2practice-input.csv","^kampl^s^z","^kampl^s^",9,6,0.666666666666667,0.1,0.9,3.062686154
+"7","2practice-input.csv","^kampl^s^","^kampl^s^z",NA,NA,NA,NA,NA,NA
+"8","practice-input.csv","r^flEkS^n","r^fEkS^n",9,7,0.777777777777778,0.111111111111111,0.888888888888889,3.701767265
+"9","practice-input.csv","hR^ken","hR^ken",6,6,1,0,1,3.943112156
+"10","practice-input.csv","vEJt^b^l","vEJt^b^",7,5,0.714285714285714,0.125,0.875,3.757216994
+"11","practice-input.csv","manyum^nt","manum^nt",4,3,0.75,0.111111111111111,0.888888888888889,3.363716149
+"12","practice-input.csv","vEJt^b^","vEJt^b^",NA,NA,NA,NA,NA,NA
