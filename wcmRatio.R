@@ -66,30 +66,38 @@ for(file in files) {
   
   for(word in 1:nrow(transcript)) {
     target <- prod <- target_plain <- prod_plain <- ""
-    target_wcm <- prod_wcm <- 0
+    target_wcm <- prod_wcm <- wf <- row <- 0
     
     if(!isMarked) {
-      target = phonetic_plain_tscript[word,1]
+      row = which(tibbletest[,2] == word)
+      # IF FOUND 
+      target = toString(tibbletest[row,2])
       prod = transcript[which(transcript[,1] == target), 2]
-      target_plain = target
+      target_plain = toString(tibbletest[row,2])
       prod_plain = prod
       target_wcm = unmarkedCalculateWCM(target)
       prod_wcm = unmarkedCalculateWCM(prod)
+      wf = toDouble(tibbletest[row,3])
+      # ELSE FILL ROW WITH NA 
     } else {
-      target = phonetic_tscript[word,1]
+      row = which(tibbletest[,1] == word)
+      # IF FOUND 
+      target = toString(tibbletest[row,1])
       prod = transcript[which(transcript[,1] == target), 2]
-      target_plain = phonetic_plain_tscript[word,1]
+      target_plain = toString(tibbletest[row,2])
       prod_plain = removeMarkers(prod)
       target_wcm = markedCalculateWCM(target)
       prod_wcm = markedCalculateWCM(prod)
+      wf = toDouble(tibbletest[row,3])
+      # ELSE FILL ROW WITH NA 
     }
     
+    # CONDITIONAL FOR IF NA 
     wcm_ratio <- prod_wcm/target_wcm  # calculate ratio of WCM scores 
     lev_dist <- stringdist(prod, target, method="lv")  # calculate Levenshtein distance
     target_segments <- str_length(target_plain)
     phonemic_error_rate <- lev_dist/target_segments
     phonemic_accuracy_rate <- 1 - phonemic_error_rate
-    wf <- as.double(wf_tscript[word,1])
     
     # calculate & store info in word by word output 
     word_by_word[word, 1] = fileName
@@ -102,6 +110,7 @@ for(file in files) {
     word_by_word[word, 8] = phonemic_accuracy_rate
     word_by_word[word, 9] = wf
     
+    # CONDITIONAL FOR IF NA 
     # add points for current word to cumulative total 
     target_phon_total = target_phon_total + target_wcm
     prod_phon_total = prod_phon_total + prod_wcm
@@ -110,13 +119,13 @@ for(file in files) {
     wf_total = wf_total + wf
   }
   
+  # CONDITIONAL FOR IF NA 
   # calculate averages for file from total points 
-  avg_target_wcm <- target_phon_total/nrow(phonetic_tscript)
-  avg_prod_wcm <- prod_phon_total/nrow(phonetic_tscript)
-  avg_wcm_ratio <- prod_phon_total/target_phon_total
+  avg_target_wcm <- target_phon_total/nrow(transcript)
+  avg_prod_wcm <- prod_phon_total/nrow(transcript)
   avg_phonemic_error_rate <- edit_distance_total/target_segments_total
   avg_phonemic_accuracy_rate <- 1 - avg_phonemic_error_rate
-  avg_wf <- wf_total/nrow(wf_tscript)
+  avg_wf <- wf_total/nrow(transcript)
   
   # write output and file name to avg output data frame  
   data[file, 1] = avg_target_wcm
