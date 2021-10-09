@@ -34,7 +34,6 @@ word_by_word <- data.frame(matrix(vector(), ncol=8))  # data frame to store info
 names <- list("File_Name", "Target", "Production", "Target_WCM","Prod_WCM",
               "WCM_Ratio", "Edit_Proportion", "Word_Frequency")  # column headers for word by word df 
 colnames(word_by_word) <- names
-wbw_row = 1  # count number of rows in word by word db 
 
 for(file in 1:length(files)) {
   
@@ -86,16 +85,14 @@ for(file in 1:length(files)) {
     wf <- as.double(wf_tscript[word,1])
     
     # calculate & store info in word by word output 
-    word_by_word[wbw_row, 1] = fileName
-    word_by_word[wbw_row, 2] = target_plain
-    word_by_word[wbw_row, 3] = prod_plain
-    word_by_word[wbw_row, 4] = target_wcm
-    word_by_word[wbw_row, 5] = prod_wcm
-    word_by_word[wbw_row, 6] = wcm_ratio
-    word_by_word[wbw_row, 7] = edit_proportion
-    word_by_word[wbw_row, 8] = wf
-    
-    wbw_row = wbw_row + 1  # move to next row in the word by word df 
+    word_by_word[word, 1] = fileName
+    word_by_word[word, 2] = target_plain
+    word_by_word[word, 3] = prod_plain
+    word_by_word[word, 4] = target_wcm
+    word_by_word[word, 5] = prod_wcm
+    word_by_word[word, 6] = wcm_ratio
+    word_by_word[word, 7] = edit_proportion
+    word_by_word[word, 8] = wf
     
     # add points for current word to cumulative total 
     target_phon_total = target_phon_total + target_wcm
