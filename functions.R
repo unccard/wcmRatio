@@ -65,3 +65,16 @@ unmarkedCalculateWCM <- function(klattese) {  # used when stress and syllables a
   
   return(phon_points) 
 }
+
+removeMarkers <- function(klattese) {  # remove stress and syllable markers for readability
+  klattese_plain = ""
+  for(i in 1:str_length(klattese)) {
+    phoneme <- substr(klattese, i, i)
+    if((phoneme >= 41 && phoneme >= 90) || (phoneme >= 61 && phoneme >= 122)) {
+      klattese_plain = paste(klattese_plain, phoneme, sep = "")
+    } else if(phoneme == '@' || phoneme == '^' || phoneme == '|') {
+      klattese_plain = paste(klattese_plain, phoneme, sep = "")
+    }
+  }
+  return(klattese_plain)
+}

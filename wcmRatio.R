@@ -14,19 +14,17 @@ engl_affricates <- c("C","J")
 engl_velars <- c("k","g","G")
 engl_liquids <- c("l","L","r","R","X")
 
-word_db <- read.csv('/Users/lindsaygreene/Desktop/programming/wcmRatio/UNCCombWordDB.csv', na.strings=c("", "NA"))
-tibbletest <-tibble(word_db$phon_klattese, word_db$SUBTLWF0to10) # isolate the categories we need from word_db
+word_db <- read.csv('UNCWordDB-2021-10-08.csv', na.strings=c("", "NA"))
+tibbletest <-tibble(word_db$KlatteseSyll, word_db$KlatteseBare, word_db$Zipf.value) # isolate the categories we need from word_db
 
 data_path <- file.path("", "Users", "lindsaygreene", "Desktop", "programming", "wcmRatio")
-isMarked <- 0  # 1 if word stress & syllabification are coded in transcript, 0 if not (default)
+isMarked <- 1  # 1 if word stress & syllabification are coded in transcript, 0 if not (default)
 
 # create list of input files we want to analyze 
 files <- list.files(path=data_path, pattern="*-input.csv")
-files_to_exclude <- c("wcmRatio_output.csv", "wcmRatio_word_by_word.csv", "UNCWordDB-2021-10-08.csv")
-files_clean <- files[! files %in% files_to_exclude]
 
 # set up data frame to store average results  
-data <- data.frame(matrix(vector(), ncol=6, nrow=length(files_clean)))  # data frame to store avg output 
+data <- data.frame(matrix(vector(), ncol=6, nrow=length(files)))  # data frame to store avg output 
 header_names <- list("Avg_Target_WCM","Avg_Production_WCM", "Avg_WCM_Ratio",
                      "Avg_Error_Rate", "Avg_Accuracy_Rate", "Avg_WF")  # column headers for avg output df 
 colnames(data) <- header_names
@@ -38,47 +36,52 @@ names <- list("File_Name", "Target", "Production", "Target_WCM","Prod_WCM", "WCM
               "Phonemic_Error_Rate", "Phonemic_Accuracy_Rate","Word_Frequency")  # column headers for word by word df 
 colnames(word_by_word) <- names
 
-for(file in 1:length(files)) {
-  
-  fileName <- files[file]
-  filePath <- paste(data_path, "/", fileName, sep="")  # update file name to absolute path 
+for(file in files) {
+  filePath <- paste(data_path, "/", file, sep="")  # update file name to absolute path 
   transcript <- read.csv(filePath, na.strings=c("", "NA"))  # read in csv and handle NA values 
   
-  # initialize vectors to populate with data for each word in sample 
-  foundInDB_tscript <- c()  # each target Klattese word that is found in the db
-  wf_tscript <- c()  # frequency of each word 
+  # # initialize vectors that will be populated with data for each word in sample 
+  # phonetic_tscript <- phonetic_plain_tscript <- wf_tscript <- c()
+  # 
+  # # populate vectors with data for each word in the transcript 
+  # for(i in 1:nrow(transcript)) {
+  #   word <- toString(transcript[i,1])
+  #   row <- 0
+  #   if(!isMarked) row = which(tibbletest[,1] == word)
+  #   else row = which(tibbletest[,2] == word)
+  #   if(!identical(toString(tibbletest[row, 2]),"character(0)")){  # omit words not found in word_db
+  #     phonetic_tscript <- append(phonetic_tscript, toString(tibbletest[row, 1]))
+  #     phonetic_plain_tscript <- append(phonetic_plain_tscript, toString(tibbletest[row,2]))
+  #     wf_tscript <- append(wf_tscript, toString(tibbletest[row,3]))
+  #   }
+  # }
+  # 
+  # # transform the vectors into data frames 
+  # phonetic_tscript<-as.data.frame(phonetic_tscript)
+  # phonetic_plain_tscript<-as.data.frame(phonetic_plain_tscript)
+  # wf_tscript<-as.data.frame(wf_tscript)
   
   # initialize cumulative points for each file 
   target_phon_total <- prod_phon_total <- edit_distance_total <- target_segments_total <- wf_total <- 0 
   
-  # populate vectors with data for each word in the transcript
-  for(i in 1:nrow(transcript)) {
-    word <- toString(transcript[i,1])
-    row <- which(tibbletest[,1] == word)
-    if(!identical(toString(tibbletest[row, 1]),"character(0)")) {  # omit words not found in word_db
-      foundInDB_tscript <- append(foundInDB_tscript, toString(tibbletest[row, 1]))
-      wf_tscript <- append(wf_tscript, toString(tibbletest[row, 2]))
-    }
-  }
-  
-  # transform vectors into data frames 
-  foundInDB_tscript<-as.data.frame(foundInDB_tscript)
-  wf_tscript<-as.data.frame(wf_tscript)
-  
-  for(word in 1:nrow(foundInDB_tscript)) {
-    target <- foundInDB_tscript[word,1]
-    prod <- transcript[which(transcript[,1] == target), 2]
-    target_plain <- removeMarkers(target) #
-    prod_plain <- removeMarkers(prod)  #
-    
-    # calculate wcm according to marked or unmarked 
+  for(word in 1:nrow(transcript)) {
+    target <- prod <- target_plain <- prod_plain <- ""
     target_wcm <- prod_wcm <- 0
+    
     if(!isMarked) {
-      target_wcm <- unmarkedCalculateWCM(target)
-      prod_wcm <- unmarkedCalculateWCM(prod)
+      target = phonetic_plain_tscript[word,1]
+      prod = transcript[which(transcript[,1] == target), 2]
+      target_plain = target
+      prod_plain = prod
+      target_wcm = unmarkedCalculateWCM(target)
+      prod_wcm = unmarkedCalculateWCM(prod)
     } else {
-      target_wcm <- markedCalculateWCM(target)  
-      prod_wcm <- markedCalculateWCM(prod)  
+      target = phonetic_tscript[word,1]
+      prod = transcript[which(transcript[,1] == target), 2]
+      target_plain = phonetic_plain_tscript[word,1]
+      prod_plain = removeMarkers(prod)
+      target_wcm = markedCalculateWCM(target)
+      prod_wcm = markedCalculateWCM(prod)
     }
     
     wcm_ratio <- prod_wcm/target_wcm  # calculate ratio of WCM scores 
@@ -108,8 +111,8 @@ for(file in 1:length(files)) {
   }
   
   # calculate averages for file from total points 
-  avg_target_wcm <- target_phon_total/nrow(foundInDB_tscript)
-  avg_prod_wcm <- prod_phon_total/nrow(foundInDB_tscript)
+  avg_target_wcm <- target_phon_total/nrow(phonetic_tscript)
+  avg_prod_wcm <- prod_phon_total/nrow(phonetic_tscript)
   avg_wcm_ratio <- prod_phon_total/target_phon_total
   avg_phonemic_error_rate <- edit_distance_total/target_segments_total
   avg_phonemic_accuracy_rate <- 1 - avg_phonemic_error_rate

@@ -1,10 +1,1 @@
-"","File_Name","Target","Production","Target_WCM","Prod_WCM","WCM_Ratio","Edit_Proportion","Word_Frequency"
-"1","2practice-input.csv","r^flEkS^n","r^fEkS^n",9,7,0.777777777777778,0.111111111111111,9.603118896
-"2","2practice-input.csv","hR^ken","hR^ken",6,6,1,0,9.869825684
-"3","2practice-input.csv","vEJt^b^l","vEJt^b^",7,5,0.714285714285714,0.125,9.692847274
-"4","2practice-input.csv","manyum^nt","man^m^nt",4,3,0.75,0.222222222222222,8.099934254
-"5","2practice-input.csv","^kampl^s^z","^kampl^s^",9,6,0.666666666666667,0.1,2.268133175
-"6","practice-input.csv","r^flEkS^n","r^fEkS^n",9,7,0.777777777777778,0.111111111111111,9.603118896
-"7","practice-input.csv","hR^ken","hR^ken",6,6,1,0,9.869825684
-"8","practice-input.csv","vEJt^b^l","vEJt^b^",7,5,0.714285714285714,0.125,9.692847274
-"9","practice-input.csv","manyum^nt","manum^nt",4,3,0.75,0.111111111111111,8.099934254
+"","File_Name","Target","Production","Target_WCM","Prod_WCM","WCM_Ratio","Phonemic_Error_Rate","Phonemic_Accuracy_Rate","Word_Frequency"
