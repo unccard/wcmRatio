@@ -68,8 +68,17 @@ for(file in 1:length(files)) {
     prod <- transcript[which(transcript[,1] == target), 2]
     target_plain <- removeMarkers(target) #
     prod_plain <- removeMarkers(prod)  #
-    target_wcm <- calculateWCM(target, word, hasWordStressCoded)  #
-    prod_wcm <- calculateWCM(prod, word, hasWordStressCoded)  #
+    
+    # calculate wcm according to marked or unmarked 
+    target_wcm <- prod_wcm <- 0
+    if(!isMarked) {
+      target_wcm <- unmarkedCalculateWCM(target)
+      prod_wcm <- unmarkedCalculateWCM(prod)
+    } else {
+      target_wcm <- markedCalculateWCM(target)  
+      prod_wcm <- markedCalculateWCM(prod)  
+    }
+    
     wcm_ratio <- prod_wcm/target_wcm  # calculate ratio of WCM scores 
     lev_dist <- stringdist(prod, target, method="lv")  # calculate Levenshtein distance
     target_segments <- str_length(target_plain)
