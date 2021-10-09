@@ -15,24 +15,27 @@ engl_velars <- c("k","g","G")
 engl_liquids <- c("l","L","r","R","X")
 
 word_db <- read.csv('/Users/lindsaygreene/Desktop/programming/wcmRatio/UNCCombWordDB.csv', na.strings=c("", "NA"))
+tibbletest <-tibble(word_db$phon_klattese, word_db$SUBTLWF0to10) # isolate the categories we need from word_db
+
 data_path <- file.path("", "Users", "lindsaygreene", "Desktop", "programming", "wcmRatio")
 isMarked <- 0  # 1 if word stress & syllabification are coded in transcript, 0 if not (default)
 
-# isolate the categories we need from word_db
-tibbletest <-tibble(word_db$phon_klattese, word_db$SUBTLWF0to10)   
+# create list of input files we want to analyze 
+files <- list.files(path=data_path, pattern="*-input.csv")
+files_to_exclude <- c("wcmRatio_output.csv", "wcmRatio_word_by_word.csv", "UNCWordDB-2021-10-08.csv")
+files_clean <- files[! files %in% files_to_exclude]
 
 # set up data frame to store average results  
-data <- data.frame(matrix(vector(), ncol=5, nrow=length(files)))  # data frame to store avg output  
-files <- list.files(path=data_path, pattern="*-input.csv")
+data <- data.frame(matrix(vector(), ncol=6, nrow=length(files_clean)))  # data frame to store avg output 
 header_names <- list("Avg_Target_WCM","Avg_Production_WCM", "Avg_WCM_Ratio",
-                     "Avg_Edit_Proportion","Avg_WF_Score")  # column headers for avg output df 
+                     "Avg_Error_Rate", "Avg_Accuracy_Rate", "Avg_WF")  # column headers for avg output df 
 colnames(data) <- header_names
 rownames(data) <- files
 
 # set up data frame to store word by word results 
-word_by_word <- data.frame(matrix(vector(), ncol=8))  # data frame to store info ab individual words from each transcript
-names <- list("File_Name", "Target", "Production", "Target_WCM","Prod_WCM",
-              "WCM_Ratio", "Edit_Proportion", "Word_Frequency")  # column headers for word by word df 
+word_by_word <- data.frame(matrix(vector(), ncol=9))  # data frame to store info ab individual words from each transcript
+names <- list("File_Name", "Target", "Production", "Target_WCM","Prod_WCM", "WCM_Ratio", 
+              "Phonemic_Error_Rate", "Phonemic_Accuracy_Rate","Word_Frequency")  # column headers for word by word df 
 colnames(word_by_word) <- names
 
 for(file in 1:length(files)) {
@@ -81,7 +84,8 @@ for(file in 1:length(files)) {
     wcm_ratio <- prod_wcm/target_wcm  # calculate ratio of WCM scores 
     lev_dist <- stringdist(prod, target, method="lv")  # calculate Levenshtein distance
     target_segments <- str_length(target_plain)
-    edit_proportion <- lev_dist/target_segments
+    phonemic_error_rate <- lev_dist/target_segments
+    phonemic_accuracy_rate <- 1 - phonemic_error_rate
     wf <- as.double(wf_tscript[word,1])
     
     # calculate & store info in word by word output 
@@ -91,8 +95,9 @@ for(file in 1:length(files)) {
     word_by_word[word, 4] = target_wcm
     word_by_word[word, 5] = prod_wcm
     word_by_word[word, 6] = wcm_ratio
-    word_by_word[word, 7] = edit_proportion
-    word_by_word[word, 8] = wf
+    word_by_word[word, 7] = phonemic_error_rate
+    word_by_word[word, 8] = phonemic_accuracy_rate
+    word_by_word[word, 9] = wf
     
     # add points for current word to cumulative total 
     target_phon_total = target_phon_total + target_wcm
@@ -106,18 +111,19 @@ for(file in 1:length(files)) {
   avg_target_wcm <- target_phon_total/nrow(foundInDB_tscript)
   avg_prod_wcm <- prod_phon_total/nrow(foundInDB_tscript)
   avg_wcm_ratio <- prod_phon_total/target_phon_total
-  avg_edit_proportion <- edit_distance_total/target_segments_total
+  avg_phonemic_error_rate <- edit_distance_total/target_segments_total
+  avg_phonemic_accuracy_rate <- 1 - avg_phonemic_error_rate
   avg_wf <- wf_total/nrow(wf_tscript)
   
   # write output and file name to avg output data frame  
   data[file, 1] = avg_target_wcm
   data[file, 2] = avg_prod_wcm
   data[file, 3] = avg_wcm_ratio
-  data[file, 4] = avg_edit_proportion
-  data[file, 5] = avg_wf
+  data[file, 4] = avg_phonemic_error_rate
+  data[file, 5] = avg_phonemic_accuracy_rate
+  data[file, 6] = avg_wf
 }
 
 # write output to file and save to same location as input files
 write.csv(data, file=paste(data_path, "/", "wcmRatio_output.csv", sep=""))
 write.csv(word_by_word, file=paste(data_path, "/", "wcmRatio_word_by_word.csv", sep=""))
-
