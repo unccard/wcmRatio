@@ -3,65 +3,7 @@ library(tidytext)
 library(stringr)
 library(dplyr)
 library(stringdist)
-
-# HELPER FUNCTIONS 
-calculateWCM<- function(klattese, index, hasWordStressCoded) {  # calculate WCM score for the word 
-  phon_points <- 0 
-  syllables <- 1
-  nonInitPrimStress <- 0
-  
-  # if the word ends in a consonant 
-  len <- str_length(klattese)
-  final_phoneme <- substr(klattese, len, len)
-  if (final_phoneme %in% engl_voiced_cons | final_phoneme %in% engl_voiceless_cons) { 
-    phon_points=phon_points+1  # syllable structures (1)
-  } 
-  
-  # if the word has consonant clusters 
-  split <- strsplit(klattese, "([iIEe@aWY^cOoUuRx|X\\ˈ]+|-+)+")  # regular expression to isolate consonants 
-  for(i in 1:length(split[[1]])) {
-    if(str_length(split[[1]][i]) > 1) { 
-      phon_points = phon_points + 1  # syllable structures (2)
-    }
-  }
-  
-  # for loop to assign points for sound classes, and find stress and syllables 
-  for (i in 1:str_length(klattese)) {
-    phoneme <- substr(klattese, i, i)
-    if(phoneme == '-') syllables=syllables+1
-    if(hasWordStressCoded == 1 && phoneme == 'ˈ' && syllables >= 2) nonInitPrimStress = 1
-    # WCM rules for sound classes 
-    if (phoneme %in% engl_velars) phon_points=phon_points+1  # sound classes (1)
-    if (phoneme %in% engl_liquids) phon_points=phon_points+1  # sound classes (2)
-    if (phoneme %in% engl_fricatives | phoneme %in% engl_affricates) {
-      phon_points=phon_points+1  # sound classes (3)
-      if (phoneme %in% engl_voiced_cons) {
-        phon_points=phon_points+1  # sound classes (4)
-      }
-    }
-  }
-  if (syllables > 2) phon_points=phon_points+1  # word patterns (1)
-  if (nonInitPrimStress == 1) phon_points=phon_points+1  # word patterns (2)
-  
-  return(phon_points) 
-}
-
-calculateRatio <- function(prod, target) {
-  return(prod/target)
-}
-
-removeMarkers <- function(klattese) {  # remove stress and syllable markers for readability
-  klattese_plain = ""
-  for(i in 1:str_length(klattese)) {
-    phoneme <- substr(klattese, i, i)
-    if((phoneme >= 41 && phoneme >= 90) || (phoneme >= 61 && phoneme >= 122)) {
-      klattese_plain = paste(klattese_plain, phoneme, sep = "")
-    } else if(phoneme == '@' || phoneme == '^' || phoneme == '|') {
-      klattese_plain = paste(klattese_plain, phoneme, sep = "")
-    }
-  }
-  return(klattese_plain)
-}
+source("functions.R")
 
 # phoneme categories 
 engl_voiceless_cons <- c("C","f","h","k","p","s","S","t","T")
@@ -74,7 +16,7 @@ engl_liquids <- c("l","L","r","R","X")
 
 word_db <- read.csv('/Users/lindsaygreene/Desktop/programming/wcmRatio/UNCCombWordDB.csv', na.strings=c("", "NA"))
 data_path <- file.path("", "Users", "lindsaygreene", "Desktop", "programming", "wcmRatio")
-hasWordStressCoded <- 1  # 1 if word stress is coded in transcript, 0 if not 
+isMarked <- 0  # 1 if word stress & syllabification are coded in transcript, 0 if not (default)
 
 # isolate the categories we need from word_db
 tibbletest <-tibble(word_db$phon_klattese, word_db$SUBTLWF0to10)   
@@ -124,11 +66,11 @@ for(file in 1:length(files)) {
   for(word in 1:nrow(foundInDB_tscript)) {
     target <- foundInDB_tscript[word,1]
     prod <- transcript[which(transcript[,1] == target), 2]
-    target_plain <- removeMarkers(target)
-    prod_plain <- removeMarkers(prod)
-    target_wcm <- calculateWCM(target, word, hasWordStressCoded)
-    prod_wcm <- calculateWCM(prod, word, hasWordStressCoded)
-    wcm_ratio <- calculateRatio(prod_wcm, target_wcm)  # calculate ratio of WCM scores 
+    target_plain <- removeMarkers(target) #
+    prod_plain <- removeMarkers(prod)  #
+    target_wcm <- calculateWCM(target, word, hasWordStressCoded)  #
+    prod_wcm <- calculateWCM(prod, word, hasWordStressCoded)  #
+    wcm_ratio <- prod_wcm/target_wcm  # calculate ratio of WCM scores 
     lev_dist <- stringdist(prod, target, method="lv")  # calculate Levenshtein distance
     target_segments <- str_length(target_plain)
     edit_proportion <- lev_dist/target_segments
@@ -157,7 +99,7 @@ for(file in 1:length(files)) {
   # calculate averages for file from total points 
   avg_target_wcm <- target_phon_total/nrow(foundInDB_tscript)
   avg_prod_wcm <- prod_phon_total/nrow(foundInDB_tscript)
-  avg_wcm_ratio <- calculateRatio(prod_phon_total, target_phon_total)
+  avg_wcm_ratio <- prod_phon_total/target_phon_total
   avg_edit_proportion <- edit_distance_total/target_segments_total
   avg_wf <- wf_total/nrow(wf_tscript)
   
