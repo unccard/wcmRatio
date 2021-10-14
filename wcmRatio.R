@@ -5,15 +5,6 @@ library(dplyr)
 library(stringdist)
 source("functions.R")
 
-# phoneme categories 
-engl_voiceless_cons <- c("C","f","h","k","p","s","S","t","T")
-engl_voiced_cons <- c("b","d","D","F","g","J","l","M","m","N","n","G","r","v","w","y","z","Z")  # word final M and N? 
-# engl_syll_cons <- c("L", "M", "N", "R") 
-engl_fricatives <- c("D","f","h","s","S","T","v","z","Z")
-engl_affricates <- c("C","J")
-engl_velars <- c("k","g","G")
-engl_liquids <- c("l","L","r","R","X")
-
 word_db <- read.csv('UNCWordDB-2021-10-08.csv', na.strings=c("", "NA"))
 tibbletest <-tibble(word_db$KlatteseSyll, word_db$KlatteseBare, word_db$Zipf.value) # isolate the categories we need from word_db
 
