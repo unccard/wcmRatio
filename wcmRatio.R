@@ -49,14 +49,14 @@ for(file in files) {
     target_wcm <- prod_wcm <- wf <- row <- 0
     
     if(isMarked == 0) {
-      row = which(tibbletest[,2] == toString(transcript[word, 1]))
-      if(length(row) == 0) {
+      row = which(tibbletest[,2] == toString(transcript[word, 1]))  # find unmarked word in the database
+      if(length(row) == 0) {  # if the word is not found in the database
         word_by_word[wbw_row, 1] = file
         word_by_word[wbw_row, 2] = toString(transcript[word, 1])
         word_by_word[wbw_row, 3] = toString(transcript[word, 2])
         wbw_row = wbw_row + 1
-        next
-      }
+        next  # keyword to end loop early and start next one 
+      }  # else the word was found in database, so perform calculations 
       target = toString(tibbletest[row,2])
       prod = transcript[which(transcript[,1] == target), 2]
       target_plain = toString(tibbletest[row,2])
@@ -65,14 +65,14 @@ for(file in files) {
       prod_wcm = unmarkedCalculateWCM(prod)
       wf = as.double(tibbletest[row,3])
     } else {
-      row = which(tibbletest[,1] == toString(transcript[word, 1]))
-      if(length(row) == 0) {
+      row = which(tibbletest[,1] == toString(transcript[word, 1]))  # find marked word in the database
+      if(length(row) == 0) {  # if the word is not found in the database
         word_by_word[wbw_row, 1] = file
         word_by_word[wbw_row, 2] = removeMarkers(toString(transcript[word, 1]))
         word_by_word[wbw_row, 3] = removeMarkers(toString(transcript[word, 2]))
         wbw_row = wbw_row + 1
         next
-      }
+      }  # else the word was found, so perform calculations 
       target = toString(tibbletest[row,1])
       prod = transcript[which(transcript[,1] == target), 2]
       target_plain = toString(tibbletest[row,2])
@@ -84,7 +84,7 @@ for(file in files) {
     
     wcm_ratio <- prod_wcm/target_wcm  # calculate ratio of WCM scores 
     lev_dist <- stringdist(prod, target, method="lv")  # calculate Levenshtein distance
-    target_segments <- str_length(target_plain)
+    target_segments <- str_length(target_plain)  # number of phonemes in the target 
     phonemic_error_rate <- lev_dist/target_segments
     phonemic_accuracy_rate <- 1 - phonemic_error_rate
       
