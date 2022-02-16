@@ -87,3 +87,10 @@ removeMarkers <- function(klattese) {  # remove stress and syllable markers for 
   }
   return(klattese_plain)
 }
+
+correctStress <- function(word) {
+  if(grepl("'", word, fixed=TRUE) == TRUE) {  # If apostrophe was used as stress marker in input
+    word <- gsub("'", "ˈ", word)  # Replace it with true klattese stress marker 
+  }
+  return(word)
+}

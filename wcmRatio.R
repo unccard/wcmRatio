@@ -57,7 +57,7 @@ for(file in files) {
       prod_wcm = unmarkedCalculateWCM(prod)
       wf = as.double(tibbletest[row,3])
     } else {
-      
+      transcript[word, 1] <- correctStress(transcript[word, 1])
       row = which(tibbletest[,1] == toString(transcript[word, 1]))  # find marked word in the database
       if(length(row) == 0) {  # if the word is not found in the database
         word_by_word[wbw_row, 1] = file
@@ -67,7 +67,7 @@ for(file in files) {
         next
       }  # else the word was found, so perform calculations 
       target = toString(tibbletest[row,1])
-      prod = transcript[which(transcript[,1] == target), 2]
+      prod = correctStress(transcript[which(transcript[,1] == target), 2])
       target_plain = toString(tibbletest[row,2])
       prod_plain = removeMarkers(prod)
       target_wcm = markedCalculateWCM(target)
