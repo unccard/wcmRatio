@@ -40,6 +40,7 @@ for(file in files) {
     target_wcm <- prod_wcm <- wf <- row <- 0
     
     if(isMarked == 0) {
+      transcript[word, 1] <- removeMarkers(transcript[word,1])  # Make sure it is really unmarked!
       row = which(tibbletest[,2] == toString(transcript[word, 1]))  # find unmarked word in the database
       if(length(row) == 0) {  # if the word is not found in the database
         word_by_word[wbw_row, 1] = file
@@ -56,6 +57,7 @@ for(file in files) {
       prod_wcm = unmarkedCalculateWCM(prod)
       wf = as.double(tibbletest[row,3])
     } else {
+      
       row = which(tibbletest[,1] == toString(transcript[word, 1]))  # find marked word in the database
       if(length(row) == 0) {  # if the word is not found in the database
         word_by_word[wbw_row, 1] = file
