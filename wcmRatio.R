@@ -5,7 +5,7 @@ library(dplyr)
 library(stringdist)
 source("functions.R")
 
-word_db <- read.csv('UNCWordDB-2021-10-08.csv', na.strings=c("", "NA"))
+word_db <- read.csv('UNCWordDB-2022-02-07.csv', na.strings=c("", "NA"))
 tibbletest <-tibble(word_db$KlatteseSyll, word_db$KlatteseBare, word_db$Zipf.value) # isolate the categories we need from word_db
 
 data_path <- file.path("", "Users", "lindsaygreene", "Desktop", "programming", "wcmRatio")
