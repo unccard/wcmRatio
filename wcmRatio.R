@@ -8,11 +8,21 @@ source("functions.R")
 word_db <- read.csv('UNCWordDB-2022-02-07.csv', na.strings=c("", "NA"))
 tibbletest <-tibble(word_db$KlatteseSyll, word_db$KlatteseBare, word_db$Zipf.value) # isolate the categories we need from word_db
 
-data_path <- file.path("", "Users", "lindsaygreene", "Desktop", "programming", "wcmRatio")
-isMarked <- 1  # 1 if word stress & syllabification are coded in transcript, 0 if not (default)
+#data_path <- file.path("", "Users", "lindsaygreene", "Desktop", "programming", "wcmRatio")
+#data_path <- "/Users/jacksa/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/Documents - CARD/Variability/REPEAT data/FINALcsvfilesVAR/"
+
+data_path <- "/Users/jacksa/Documents/github/wcmRatio"
+
+isMarked <- 0  # 1 if word stress & syllabification are coded in transcript, 0 if not (default)
 
 # create list of input files we want to analyze 
-files <- list.files(path=data_path, pattern="*-input.csv")
+#files <- list.files(path=data_path, pattern="*-input.csv")
+files <- list.files(path=data_path, pattern="*.csv")
+
+files_to_exclude <- c("wcmRatio_output.csv", "wcmRatio_word_by_word.csv", "UNCWordDB-2022-02-07.csv")
+files_clean <- files[! files %in% files_to_exclude]
+all_files <- files
+files <- files_clean
 
 # set up data frame to store average results  
 data <- data.frame(matrix(vector(), ncol=6, nrow=length(files)))  # data frame to store avg output 
@@ -39,36 +49,65 @@ for(file in files) {
     target <- prod <- target_plain <- prod_plain <- ""
     target_wcm <- prod_wcm <- wf <- row <- 0
     
+    
+    # this section is for transcriptions that are not marked for syllable 
+    # boundary or stress
     if(isMarked == 0) {
       transcript[word, 1] <- removeMarkers(transcript[word,1])  # Make sure it is really unmarked!
-      row = which(tibbletest[,2] == toString(transcript[word, 1]))  # find unmarked word in the database
-      if(length(row) == 0) {  # if the word is not found in the database
-        word_by_word[wbw_row, 1] = file
-        word_by_word[wbw_row, 2] = toString(transcript[word, 1])
-        word_by_word[wbw_row, 3] = toString(transcript[word, 2])
-        wbw_row = wbw_row + 1
-        next  # keyword to end loop early and start next one 
-      }  # else the word was found in database, so perform calculations 
-      target = toString(tibbletest[row,2])
-      prod = transcript[which(transcript[,1] == target), 2]
-      target_plain = toString(tibbletest[row,2])
+      transcript[word, 2] <- removeMarkers(transcript[word,2])  # production also needs to be unmarked
+      
+      # if we find the unmarked target word in the database, we can maybe do 
+      # something with it. in theory we could use it to get correct syllabi-
+      # fication for the target, but that doesn't really help us with the 
+      # production.
+      
+      # But we can use it to get word frequency
+      
+      row = which(tibbletest[,2] == toString(transcript[word, 1]))  # find unmarked target word in the database- 
+      
+      #if(length(row) == 0) {  # if the word is not found in the database ## at this time we skip it if not in db...
+      #  word_by_word[wbw_row, 1] = file
+      #  word_by_word[wbw_row, 2] = toString(transcript[word, 1])
+      #  word_by_word[wbw_row, 3] = toString(transcript[word, 2])
+      #  wbw_row = wbw_row + 1
+      #  next  # keyword to end loop early and start next one 
+      #}  # else the word was found in database, so perform calculations 
+
+      #target = toString(tibbletest[row,2]) # this would be finding the standard unmarked target- why?
+      #prod = transcript[which(transcript[,1] == target), 2] # this finds the production for the target that matches the current target. why??
+      #target_plain = toString(tibbletest[row,2]) # this all seems circular to me. we already created a plain target by removing markers. 
+      target <- transcript[word, 1]
+      prod <- transcript[word,2]
+      target_plain = target
       prod_plain = prod
       target_wcm = unmarkedCalculateWCM(target)
       prod_wcm = unmarkedCalculateWCM(prod)
-      wf = as.double(tibbletest[row,3])
+ 
+     if(length(row) > 0) {
+      wf = as.double(tibbletest[row,3]) # as long as we recognize target, we can get word freq.
+      }
+
+      
+      # this part for marked transcriptions
+            
     } else {
-      transcript[word, 1] <- correctStress(transcript[word, 1])
+      transcript[word, 1] <- correctStress(transcript[word, 1]) #fix non-standard stress marker
       row = which(tibbletest[,1] == toString(transcript[word, 1]))  # find marked word in the database
-      if(length(row) == 0) {  # if the word is not found in the database
-        word_by_word[wbw_row, 1] = file
-        word_by_word[wbw_row, 2] = removeMarkers(toString(transcript[word, 1]))
-        word_by_word[wbw_row, 3] = removeMarkers(toString(transcript[word, 2]))
-        wbw_row = wbw_row + 1
-        next
-      }  # else the word was found, so perform calculations 
-      target = toString(tibbletest[row,1])
-      prod = correctStress(transcript[which(transcript[,1] == target), 2])
-      target_plain = toString(tibbletest[row,2])
+    
+      # we are not going to skip words not found in the database- we just can't get word freq is all
+      #  if(length(row) == 0) {  # if the word is not found in the database
+      #  word_by_word[wbw_row, 1] = file
+      #  word_by_word[wbw_row, 2] = removeMarkers(toString(transcript[word, 1]))
+      #  word_by_word[wbw_row, 3] = removeMarkers(toString(transcript[word, 2]))
+      #  wbw_row = wbw_row + 1
+      #  next
+      #}  # else the word was found, so perform calculations 
+     # target = toString(tibbletest[row,1]) # why would we go to the database for the target?
+      
+      target =  transcript[word, 1]
+      #prod = correctStress(transcript[which(transcript[,1] == target), 2])
+      prod = correctStress(transcript[word,2])
+      target_plain = removeMarkers(target) #toString(tibbletest[row,2])
       prod_plain = removeMarkers(prod)
       target_wcm = markedCalculateWCM(target)
       prod_wcm = markedCalculateWCM(prod)
@@ -83,8 +122,15 @@ for(file in files) {
       
     # calculate & store info in word by word output 
     word_by_word[wbw_row, 1] = file
-    word_by_word[wbw_row, 2] = target_plain
-    word_by_word[wbw_row, 3] = prod_plain
+    
+    if (isMarked == 1){
+      word_by_word[wbw_row, 2] = target
+      word_by_word[wbw_row, 3] = prod
+    }  else { # if unmarked, we leave the transcriptions plain
+        word_by_word[wbw_row, 2] = target_plain
+        word_by_word[wbw_row, 3] = prod_plain
+    }
+    
     word_by_word[wbw_row, 4] = target_wcm
     word_by_word[wbw_row, 5] = prod_wcm
     word_by_word[wbw_row, 6] = wcm_ratio
